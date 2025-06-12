@@ -1,0 +1,36 @@
+name: Build Kivy APK
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up environment
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip unzip git zip openjdk-11-jdk
+          pip3 install --user buildozer Cython
+          export PATH=$HOME/.local/bin:$PATH
+          git clone https://github.com/kivy/buildozer.git
+          cd buildozer
+          python3 setup.py install
+          cd ..
+
+      - name: Prepare project
+        run: |
+          mkdir bybitbot
+          cp main.py bybitbot/main.py
+          cp buildozer.spec bybitbot/buildozer.spec
+          cd bybitbot
+          buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: bybitbot-apk
+          path: bybitbot/bin/*.apk
